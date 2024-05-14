@@ -11,7 +11,8 @@ initial_team_data = {
     'Role': ['Manager', 'Developer', 'Designer', 'Manager', 'Developer',
              'Designer', 'Manager', 'Developer', 'Designer', 'Manager'],
     'Team Leader': [True, False, False, True, False, False, True, False, False, False],
-    'Performance': [90, 85, 75, 92, 88, 78, 87, 84, 79, 91]
+    'Performance': [90, 85, 75, 92, 88, 78, 87, 84, 79, 91],
+    'Sales': [15000, 18000, 20000, 22000, 19000, 21000, 23000, 17000, 24000, 16000]  # Added sales data for each team member
 }
 
 # Create a DataFrame for team data
@@ -27,17 +28,17 @@ initial_sales_data = {
 sales_df = pd.DataFrame(initial_sales_data)
 
 # Function to add a new team member
-def add_team_member(name, contact_info, role, is_team_leader, performance):
+def add_team_member(name, contact_info, role, is_team_leader, performance, sales):  # Added sales parameter
     global team_df
     # Check if the name or contact info already exists
     if name in team_df['Name'].values or contact_info in team_df['Contact Info'].values:
         st.error("A team member with the same name or contact info already exists.")
         return
-    new_member = {'Name': name, 'Contact Info': contact_info, 'Role': role, 'Team Leader': is_team_leader, 'Performance': performance}
+    new_member = {'Name': name, 'Contact Info': contact_info, 'Role': role, 'Team Leader': is_team_leader, 'Performance': performance, 'Sales': sales}  # Added sales data
     team_df = team_df.append(new_member, ignore_index=True)
 
 # Function to edit an existing team member
-def edit_team_member(index, name, contact_info, role, is_team_leader, performance):
+def edit_team_member(index, name, contact_info, role, is_team_leader, performance, sales):  # Added sales parameter
     global team_df
     # Check if the name or contact info already exists (excluding the current member)
     if (name in team_df['Name'].values or contact_info in team_df['Contact Info'].values) and \
@@ -49,6 +50,7 @@ def edit_team_member(index, name, contact_info, role, is_team_leader, performanc
     team_df.at[index, 'Role'] = role
     team_df.at[index, 'Team Leader'] = is_team_leader
     team_df.at[index, 'Performance'] = performance
+    team_df.at[index, 'Sales'] = sales  # Update sales data
 
 # Function to delete a team member
 def delete_team_member(index):
@@ -61,17 +63,34 @@ def sales_performance_page():
 
     # Display the sales data
     st.write('## Sales Data')
-    st.write(sales_df)
+    st.write(team_df[['Name', 'Sales']])  # Show sales for every team member
 
     # Visualization: Sales Performance
     st.write('## Sales Performance')
     fig = px.line(sales_df, x='Month', y='Sales', title='Monthly Sales Performance')
     st.plotly_chart(fig)
 
+# Function to display the team calendar page
+def team_calendar_page():
+    st.title('Team Calendar')
+
+    # Define example events
+    example_events = {
+        'Event': ['Meeting', 'Training', 'Product Launch', 'Team Building', 'Client Presentation'],
+        'Date': ['2024-06-01', '2024-06-10', '2024-06-15', '2024-06-20', '2024-06-25']
+    }
+
+    # Create a DataFrame for example events
+    events_df = pd.DataFrame(example_events)
+
+    # Display the team calendar
+    st.write('## Team Calendar')
+    st.write(events_df)
+
 # Streamlit app
 def main():
     st.sidebar.title('Navigation')
-    page = st.sidebar.radio('Go to', ['Team Management', 'Sales Performance'])
+    page = st.sidebar.radio('Go to', ['Team Management', 'Sales Performance', 'Team Calendar'])
 
     if page == 'Team Management':
         st.title('Team Management')
@@ -92,8 +111,9 @@ def main():
             new_role = st.selectbox('Role', ['Manager', 'Developer', 'Designer'])
             is_team_leader = st.checkbox('Team Leader')
             performance = st.slider('Performance', min_value=0, max_value=100, value=50, step=1)
+            sales = st.number_input('Sales', value=0)  # Added sales input field
             if st.button('Add Team Member'):
-                add_team_member(new_name, new_contact_info, new_role, is_team_leader, performance)
+                add_team_member(new_name, new_contact_info, new_role, is_team_leader, performance, sales)
                 st.success('New team member added successfully!')
 
         elif selected_option == 'Edit Team Member':
@@ -105,8 +125,9 @@ def main():
             edited_role = st.selectbox('Role', ['Manager', 'Developer', 'Designer'], index=['Manager', 'Developer', 'Designer'].index(team_df.iloc[member_index]['Role']))
             is_team_leader = st.checkbox('Team Leader', team_df.iloc[member_index]['Team Leader'])
             edited_performance = st.slider('Performance', min_value=0, max_value=100, value=team_df.iloc[member_index]['Performance'], step=1)
+            edited_sales = st.number_input('Sales', value=team_df.iloc[member_index]['Sales'])  # Added sales input field
             if st.button('Edit Team Member'):
-                edit_team_member(member_index, edited_name, edited_contact_info, edited_role, is_team_leader, edited_performance)
+                edit_team_member(member_index, edited_name, edited_contact_info, edited_role, is_team_leader, edited_performance, edited_sales)
                 st.success('Team member edited successfully!')
 
         elif selected_option == 'Delete Team Member':
@@ -126,6 +147,9 @@ def main():
 
     elif page == 'Sales Performance':
         sales_performance_page()
+
+    elif page == 'Team Calendar':  # Added Team Calendar page
+        team_calendar_page()
 
 if __name__ == '__main__':
     main()
